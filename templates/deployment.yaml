@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "logchimp.fullname" . }}
+  labels:
+    {{- include "logchimp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "logchimp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "logchimp.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      enableServiceLinks: false
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.postgresql.enabled }}
+      initContainers:
+      - name: check-postgres
+        image: {{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}
+        imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+        command:
+        - bash
+        - -ce
+        - | 
+          until pg_isready --quiet \
+               --host {{ .Release.Name }}-postgresql.{{ .Release.Namespace }} \
+               --port {{ .Values.postgresql.primary.service.ports.postgresql }} \
+               --dbname {{ .Values.postgresql.auth.database }} \
+               --username {{ .Values.postgresql.auth.username }};
+          do
+            echo waiting for postgres database to be ready
+            sleep 2.5
+          done
+      {{- end }}
+      containers:
+      - name: logchimp
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: LOGCHIMP_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "logchimp.fullname" . }}-key
+              key: key
+        {{- if .Values.postgresql.enabled }}
+        - name: LOGCHIMP_DB_HOST
+          value: {{ .Release.Name }}-postgresql.{{ .Release.Namespace }}
+        - name: LOGCHIMP_DB_PORT
+          value: {{ .Values.postgresql.primary.service.ports.postgresql | quote }}
+        - name: LOGCHIMP_DB_DATABASE
+          value: {{ .Values.postgresql.auth.database | quote }}
+        - name: LOGCHIMP_DB_USER
+          value: {{ .Values.postgresql.auth.username | quote }}
+        - name: LOGCHIMP_DB_PASSWORD
+          value: {{ .Values.postgresql.auth.password | quote }}
+        {{- end }}
+        {{- range $key, $value := .Values.env | default dict }}
+        - name: {{ $key }}
+          {{- if eq (typeOf $value) "map[string]interface {}" }}
+          {{- toYaml $value | nindent 10 }}
+          {{- else }}
+          value: {{ $value | quote }}
+          {{- end }}
+        {{- end }}
+        ports:
+          - name: node
+            containerPort: 3000
+            protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: node
+        readinessProbe:
+          httpGet:
+            path: /
+            port: node
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}

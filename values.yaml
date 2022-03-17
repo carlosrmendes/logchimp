@@ -1,0 +1,85 @@
+# Default values for logchimp.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: crmendes/logchimp
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+## env:
+##   LOGCHIMP_MAIL_SERVICE:
+##   LOGCHIMP_MAIL_HOST:
+##   LOGCHIMP_MAIL_USER:
+##   LOGCHIMP_MAIL_PASSWORD:
+##   LOGCHIMP_MAIL_PORT:
+##
+##   set LOGCHIMP_DB_* env vars if .postgresql.enabled=false
+##   LOGCHIMP_DB_HOST:
+##   LOGCHIMP_DB_PORT:
+##   LOGCHIMP_DB_DATABASE:
+##   LOGCHIMP_DB_USER:
+##   LOGCHIMP_DB_PASSWORD:
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+postgresql:
+  enabled: true
+  image:
+    repository: bitnami/postgresql
+    tag: 12.10.0-debian-10-r34
+  auth:
+    username: admin
+    password: admin
+    database: logchimp
+  primary:
+    service:
+      type: ClusterIP
+      ports:
+        postgresql: 5432
+    persistence:
+      size: 32Gi
+
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+podAnnotations: {}
+podSecurityContext: {}
+  # fsGroup: 2000
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
