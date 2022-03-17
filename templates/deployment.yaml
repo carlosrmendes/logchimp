@@ -93,14 +93,13 @@ spec:
         ports:
           - name: node
             containerPort: 3000
-            protocol: TCP
         livenessProbe:
           httpGet:
-            path: /
+            path: /api
             port: node
         readinessProbe:
           httpGet:
-            path: /
+            path: /api
             port: node
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
