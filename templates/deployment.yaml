@@ -70,6 +70,8 @@ spec:
             secretKeyRef:
               name: {{ include "logchimp.fullname" . }}-key
               key: key
+        - name: LOGCHIMP_BASE_URL
+          value: {{ .Values.logchimpBaseURL | default "http://localhost:3000" | quote }}
         {{- if .Values.postgresql.enabled }}
         - name: LOGCHIMP_DB_HOST
           value: {{ .Release.Name }}-postgresql.{{ .Release.Namespace }}

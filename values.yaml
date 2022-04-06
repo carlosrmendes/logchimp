@@ -2,6 +2,12 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+
+## Logchimp base URL is required to be set
+## if empty defaults to http://localhost:3000
+logchimpBaseURL: http://kubernetes.docker.internal
+
+
 replicaCount: 1
 
 image:
@@ -10,23 +16,23 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
-## env:
-##   LOGCHIMP_MAIL_SERVICE:
-##   LOGCHIMP_MAIL_HOST:
-##   LOGCHIMP_MAIL_USER:
-##   LOGCHIMP_MAIL_PASSWORD:
-##   LOGCHIMP_MAIL_PORT:
-##
-##   set LOGCHIMP_DB_* env vars if .postgresql.enabled=false
-##   LOGCHIMP_DB_HOST:
-##   LOGCHIMP_DB_PORT:
-##   LOGCHIMP_DB_DATABASE:
-##   LOGCHIMP_DB_USER:
-##   LOGCHIMP_DB_PASSWORD:
+# env:
+#   LOGCHIMP_MAIL_SERVICE:
+#   LOGCHIMP_MAIL_HOST:
+#   LOGCHIMP_MAIL_USER:
+#   LOGCHIMP_MAIL_PASSWORD:
+#   LOGCHIMP_MAIL_PORT:
+#
+## set LOGCHIMP_DB_* env vars if .postgresql.enabled=false
+#   LOGCHIMP_DB_HOST:
+#   LOGCHIMP_DB_PORT:
+#   LOGCHIMP_DB_DATABASE:
+#   LOGCHIMP_DB_USER:
+#   LOGCHIMP_DB_PASSWORD:
 
 service:
-  type: ClusterIP
-  port: 3000
+  type: LoadBalancer
+  port: 80
 
 ingress:
   enabled: false
